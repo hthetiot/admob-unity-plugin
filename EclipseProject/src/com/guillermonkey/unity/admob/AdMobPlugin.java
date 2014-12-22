@@ -26,11 +26,9 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout.LayoutParams;
 
-import com.google.ads.Ad;
-import com.google.ads.AdListener;
-import com.google.ads.AdRequest;
-import com.google.ads.AdRequest.ErrorCode;
-import com.google.ads.AdView;
+import com.google.android.gms.ads.*;
+import com.google.android.gms.ads.AdRequest.Builder;
+import com.google.android.gms.ads.AdSize;
 
 import com.unity3d.player.UnityPlayer;
 
@@ -47,7 +45,7 @@ public class AdMobPlugin{
 	private LinearLayout		layout;
 	private AdView				view;
 	private int					received;
-	private ErrorCode			lastError;
+	private int					lastError;
 
 	private Runnable CONF = new Runnable(){ @Override public void run(){ _conf(); } };
 	private Runnable SHOW = new Runnable(){ @Override public void run(){ _show(); } };
@@ -56,7 +54,7 @@ public class AdMobPlugin{
 	private AdListener AD_LISTENER = new AdListener(){
 
 		@Override
-		public void onReceiveAd(Ad ad){
+		public void onAdLoaded(){
 
 			received++;
 
@@ -64,7 +62,7 @@ public class AdMobPlugin{
 		}
 
 		@Override
-		public void onFailedToReceiveAd(Ad ad, ErrorCode errorCode){
+		public void onAdFailedToLoad(int errorCode){
 
 			Log.e(AdMobPlugin.LOGTAG, "Failed to receive ad: " + errorCode);
 
@@ -72,19 +70,19 @@ public class AdMobPlugin{
 		}
 
 		@Override
-		public void onPresentScreen(Ad ad){
+		public void onAdOpened(){
 
 			//Log.d(AdMobPlugin.LOGTAG, "On present screen");
 		}
 
 		@Override
-		public void onDismissScreen(Ad ad){
+		public void onAdClosed(){
 
 			//Log.d(AdMobPlugin.LOGTAG, "On dismiss screen");
 		}
 
 		@Override
-		public void onLeaveApplication(Ad ad){
+		public void onAdLeftApplication(){
 
 			//Log.d(AdMobPlugin.LOGTAG, "On leaving application");
 		}
@@ -168,7 +166,10 @@ public class AdMobPlugin{
 
 			Log.d(AdMobPlugin.LOGTAG, "Creating new AdView...");
 
-			this.view = new AdView(activity, config.size, config.publisherId);
+			this.view = new AdView(activity);
+			this.view.setAdUnitId(config.publisherId);
+			//this.view.setAdSize(config.size);
+			this.view.setAdSize(AdSize.BANNER);
 
 			Log.d(AdMobPlugin.LOGTAG, "Setting up ad listener...");
 
@@ -254,18 +255,18 @@ public class AdMobPlugin{
 		try{
 
 			// Create the ad request
-			AdRequest adRequest = new AdRequest();
+			Builder adRequestBuilder = new AdRequest.Builder();
 
 			if( this.config.isTesting ){
 
 				// Add this just to make sure that we are in test mode
-				adRequest.addTestDevice(AdRequest.TEST_EMULATOR);
+				adRequestBuilder.addTestDevice(AdRequest.DEVICE_ID_EMULATOR);
 
 				Log.d(AdMobPlugin.LOGTAG, "Added dummy device ID: TEST_DEVICE_ID");
 
 				if(this.config.guessSelfDeviceId && this.config.selfDeviceId != null){
 
-					adRequest.addTestDevice(this.config.selfDeviceId);
+					adRequestBuilder.addTestDevice(this.config.selfDeviceId);
 
 					Log.d(AdMobPlugin.LOGTAG, "Added self device ID: " + this.config.selfDeviceId);
 				}
@@ -274,7 +275,7 @@ public class AdMobPlugin{
 
 					for(String testDeviceId : this.config.testDeviceIds){
 
-						adRequest.addTestDevice(testDeviceId);
+						adRequestBuilder.addTestDevice(testDeviceId);
 
 						Log.d(AdMobPlugin.LOGTAG, "Added test device ID: " + testDeviceId);
 					}
@@ -283,26 +284,16 @@ public class AdMobPlugin{
 				if(this.target != null){
 
 					if(this.target.birthday != null){
-
-						adRequest.setBirthday(this.target.birthday);
-					}
-
-					if(this.target.gender != null){
-
-						adRequest.setGender(this.target.gender);
+						adRequestBuilder.setBirthday(this.target.birthday);
 					}
 
 					if(this.target.location != null){
-
-						adRequest.setLocation(this.target.location);
-					}
-
-					if(this.target.keywords != null){
-
-						adRequest.setKeywords(this.target.keywords);
+						adRequestBuilder.setLocation(this.target.location);
 					}
 				}
 			}
+			
+			AdRequest adRequest = adRequestBuilder.build();
 
 			// Load the ad
 			this.view.loadAd(adRequest);
@@ -317,22 +308,22 @@ public class AdMobPlugin{
 		}
 	}
 
-	public String getLastError(){
+	public Integer getLastError(){
 
-		String error;
+		Integer error;
 
-		if(this.lastError == null){
+		if(this.lastError == 0){
 
 			//Log.d(AdMobPlugin.LOGTAG, "Last error: no error");
 
 			return(null);
 		}
 
-		error = this.lastError.toString();
+		error = this.lastError;
 
 		Log.i(AdMobPlugin.LOGTAG, "Last error: " + error);
 
-		this.lastError = null;
+		this.lastError = 0;
 
 		return(error);
 	}

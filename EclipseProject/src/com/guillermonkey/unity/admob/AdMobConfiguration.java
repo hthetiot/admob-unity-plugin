@@ -72,7 +72,7 @@ class AdMobConfiguration{
 		this.testDeviceIds		= testDeviceIds;
 		this.guessSelfDeviceId	= guessSelfDeviceId;
 		this.selfDeviceId		= (guessSelfDeviceId ? AdMobUtil.guessSelfDeviceId() : null);
-		this.size				= AdMobConfiguration.parseAdSize(size);
+		this.size				= AdMobConfiguration.parseAdSize((int) size);
 		this.orientation		= AdMobConfiguration.parseOrientation(orientation);
 		this.gravity			= AdMobConfiguration.parseGravity(horizontalPosition, verticalPosition);
 	}
@@ -159,25 +159,13 @@ class AdMobConfiguration{
 	@Override
 	public String toString(){
 
-		String tmp;
-
-		// Work around SMART_BANNER bug
-		try{
-
-			tmp = this.size.toString();
-
-		}catch(Exception error){
-
-			tmp = ( this.size == AdSize.SMART_BANNER ? "SMART_BANNER" : "???" );
-		}
-
 		return(
 			"AdMobConfiguration{" +
 				"publisherId: " + this.publisherId + ", " +
 				"isTesting: " + this.isTesting + ", " +
 				"testDeviceIds: " + Arrays.toString( this.testDeviceIds ) + ", " +
 				"guessSelfDeviceId: " + this.guessSelfDeviceId + (this.guessSelfDeviceId ? " (" + this.selfDeviceId + "), " : ", ") +
-				"size: " + tmp + ", " +
+				"size: " + this.size + ", " +
 				"orientation: " + this.orientation + ", " +
 				"gravity: " + this.gravity +
 			"}"
